@@ -1,0 +1,9 @@
+{
+	"name": "dijk",
+	"authors": [
+		"karita"
+	],
+	"description": "graph algorithm librart for D",
+	"copyright": "Copyright © 2017, karita",
+	"license": "BSL-1.0"
+}
