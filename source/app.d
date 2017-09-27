@@ -38,8 +38,7 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
         foreach (key, val; tree) {
             if (key[0] == v) {
                 Edge e = { to: key[1], cost: distfun(val) };
-                if (distDict[v] + e.cost < distDict[e.to])
-                {
+                if (distDict[v] + e.cost < distDict[e.to]) {
                     distDict[e.to] = distDict[v] + e.cost;
                     // found new shorter path, push to queue for re-calculate path
                     queue.insert(Edge(e.to, distDict[e.to]));
@@ -50,6 +49,36 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
     return distDict;
 }
 
+
+unittest {
+    /*
+
+      shortest path:
+      - a -> (b -> d ->) e = 5
+      - a -> c = 4
+      - a -> (b ->) d = 4
+
+     a__3_b__1__d
+       \   \5    \1
+        \_4_\c__2_\_e
+
+     */
+    enum V { a, b, c, d, e }
+    int[V[2]] tree = [
+        [V.a, V.b]: 3,
+        [V.a, V.c]: 4,
+        [V.b, V.c]: 5,
+        [V.b, V.d]: 1,
+        [V.c, V.e]: 2,
+        [V.d, V.e]: 1
+    ];
+    auto dists = tree.dijkstra!(i => i)(V.a);
+    assert(dists[V.a] == 0);
+    assert(dists[V.b] == 3);
+    assert(dists[V.c] == 4);
+    assert(dists[V.d] == 4);
+    assert(dists[V.e] == 5);
+}
 
 
 // TODO: support bidirectional list
