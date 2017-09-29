@@ -11,11 +11,15 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
 
     // initalize return dict
     alias D = typeof(distfun(E.init));
-    D[V] distDict;
-    foreach (key; tree.byKey()) {
-        distDict[key[1]] = D.max;
+    struct Path {
+        D cost;
+        V[] path;
     }
-    distDict[start] = 0;
+    Path[V] distDict;
+    foreach (key; tree.byKey()) {
+        distDict[key[1]] = Path(D.max, []);
+    }
+    distDict[start] = Path(0, [start]);
 
     // priority_queue
     struct Edge {
@@ -32,16 +36,16 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
         auto v = edge.to;
         auto cost = edge.cost;
         // another shorter path was already found, skip
-        if (distDict[v] < cost)
+        if (distDict[v].cost < cost)
             continue;
 
         foreach (key, val; tree) {
             if (key[0] == v) {
                 Edge e = { to: key[1], cost: distfun(val) };
-                if (distDict[v] + e.cost < distDict[e.to]) {
-                    distDict[e.to] = distDict[v] + e.cost;
+                if (distDict[v].cost + e.cost < distDict[e.to].cost) {
+                    distDict[e.to] = Path(distDict[v].cost + e.cost, distDict[v].path ~ e.to);
                     // found new shorter path, push to queue for re-calculate path
-                    queue.insert(Edge(e.to, distDict[e.to]));
+                    queue.insert(Edge(e.to, distDict[e.to].cost));
                 }
             }
         }
@@ -52,11 +56,6 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
 
 unittest {
     /*
-
-      shortest path:
-      - a -> (b -> d ->) e = 5
-      - a -> c = 4
-      - a -> (b ->) d = 4
 
      a__3_b__1__d
        \   \5    \1
@@ -73,11 +72,11 @@ unittest {
         [V.d, V.e]: 1
     ];
     auto dists = tree.dijkstra!(i => i)(V.a);
-    assert(dists[V.a] == 0);
-    assert(dists[V.b] == 3);
-    assert(dists[V.c] == 4);
-    assert(dists[V.d] == 4);
-    assert(dists[V.e] == 5);
+    assert(dists[V.a].cost == 0 && dists[V.a].path == [V.a]);
+    assert(dists[V.b].cost == 3 && dists[V.b].path == [V.a, V.b]);
+    assert(dists[V.c].cost == 4 && dists[V.c].path == [V.a, V.c]);
+    assert(dists[V.d].cost == 4 && dists[V.d].path == [V.a, V.b, V.d]);
+    assert(dists[V.e].cost == 5 && dists[V.e].path == [V.a, V.b, V.d, V.e]);
 }
 
 
@@ -178,7 +177,7 @@ alias Map = AdjencyList!(City, Highway, Country);
 
 
 void main() {
-    import std.stdio : writeln;
+    import std.stdio : writefln, writeln;
 
     // https://boostjp.github.io/tips/graph.html#bundle-property
     Map map;
@@ -201,6 +200,7 @@ void main() {
     map[e].distance = 325.5;
 
     auto distance = map.shortestPaths!(a => a.distance)(v1);
-    writeln("Tokyo-Nagoya : ", distance[v2], "km");
+    auto path = distance[v2].path;
+    writefln("Tokyo-Nagoya : %s km (%s)", distance[v2].cost, map.edgeDict[[path[0], path[1]]]);
     map.writeln;
 }
