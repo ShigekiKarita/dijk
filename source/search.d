@@ -1,3 +1,5 @@
+module dijk.search;
+
 /* library code */
 
 
@@ -6,7 +8,7 @@
  - https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Using_a_priority_queue
  - http://shifth.hatenablog.com/entry/2015/05/31/104829
  +/
-auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
+auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) pure {
     import std.container : Array, PriorityQueue = BinaryHeap;
 
     // initalize return dict
@@ -54,14 +56,19 @@ auto dijkstra(alias distfun, E, V)(E[V[2]] tree, V start) {
 }
 
 
+// TODO: impl dijkstra with RedBlackTree instead of BinaryHeap
+// https://rosettacode.org/wiki/Dijkstra%27s_algorithm#D
+
+
+///
 unittest {
     /*
 
-     a__3_b__1__d
-       \   \5    \1
-        \_4_\c__2_\_e
+      a__3_b__1__d
+      \   \5    \1
+      \_4_\c__2_\_e
 
-     */
+    */
     enum V { a, b, c, d, e }
     int[V[2]] tree = [
         [V.a, V.b]: 3,
@@ -70,7 +77,7 @@ unittest {
         [V.b, V.d]: 1,
         [V.c, V.e]: 2,
         [V.d, V.e]: 1
-    ];
+        ];
     auto dists = tree.dijkstra!(i => i)(V.a);
     assert(dists[V.a].cost == 0 && dists[V.a].path == [V.a]);
     assert(dists[V.b].cost == 3 && dists[V.b].path == [V.a, V.b]);
@@ -150,36 +157,37 @@ struct AdjencyList(Vertex, Edge, Graph) {
     }
 }
 
-
+///
 auto shortestPaths(alias WeightFun, AL)(AL map, AL.VertexKey start) {
     return dijkstra!(a => a.distance)(map.edgeDict, start);
 }
 
 
-/* user code */
-
-struct City {
-    string name;
-    int population;
-    int[] zipcodes;
-}
-
-struct Highway {
-    string name;
-    double distance;
-}
-
-struct Country {
-    string name;
-}
-
-alias Map = AdjencyList!(City, Highway, Country);
-
-
-void main() {
+///
+unittest {
     import std.stdio : writefln, writeln;
 
     // https://boostjp.github.io/tips/graph.html#bundle-property
+
+    /* user code */
+
+    struct City {
+        string name;
+        int population;
+        int[] zipcodes;
+    }
+
+    struct Highway {
+        string name;
+        double distance;
+    }
+
+    struct Country {
+        string name;
+    }
+
+    alias Map = AdjencyList!(City, Highway, Country);
+
     Map map;
     map[Map.Bundle.graph].name = "Japan";
     assert(map.graph.name == "Japan");
